@@ -33,10 +33,8 @@ class PeakDatasetPickerLog(ToolsPlugin):
 
         pattern = re.compile(r'^.*?\[(\d+)\]\s=\s(\d+(\.\d+)?),\s(.*?)\[(\d+)\]\s=\s(\d+(\.\d+)?)')
 
-        old_index = old_x_value = old_y_value = 0
-        i_data = []
-        x_data = []
-        y_data = []
+        o_value = (0, 0, 0)
+        p_data = []
 
         for line in text.split('\n'):
             match = pattern.search(line)
@@ -47,22 +45,22 @@ class PeakDatasetPickerLog(ToolsPlugin):
                     y_value = float(match.group(6))
                     y_name = match.group(4)
 
+                    old_index = o_value[0]
                     if abs(index - old_index) > 10:
                         if old_index == 0:
-                            i_data.clear()
-                            x_data.clear()
-                            y_data.clear()
-                        elif old_index not in i_data:
-                            i_data.append(old_index)
-                            x_data.append(old_x_value)
-                            y_data.append(old_y_value)
+                            p_data.clear()
+                        # check if the index is in the list
+                        elif all(t[0] != old_index for t in p_data):
+                            p_data.append(o_value)
 
-                    # check if the index is in the list
-                    ds_y = interface.GetData(y_name)[0]
-                    if index > 3 and y_value > ds_y[(index-1)-2] and y_value > ds_y[(index-1)+2]:
-                        old_index = index
-                        old_x_value = x_value
-                        old_y_value = y_value
+                    # check if the y value is a peak
+                    try:
+                        ds_y = interface.GetData(y_name)[0]
+                        if index > 3 and y_value > ds_y[(index-1)-2] and y_value > ds_y[(index-1)+2]:
+                            o_value = (index, x_value, y_value)
+
+                    except KeyError:
+                        pass
 
                 except ValueError:
                     pass
@@ -70,14 +68,13 @@ class PeakDatasetPickerLog(ToolsPlugin):
             else:
                 # if we find a line that does not match the pattern, ignore previous data
                 # mark to clear the data
-                old_index = 0
+                o_value = (0, 0, 0)
 
-        if old_index != 0:
-            x_data.append(old_x_value)
-            y_data.append(old_y_value)
+        if o_value[0] != 0:
+            p_data.append(o_value)
 
-            interface.SetData(fields['ds_out'] + '_x', x_data)
-            interface.SetData(fields['ds_out'] + '_y', y_data)
+            interface.SetData(fields['ds_out'] + '_x', [p[1] for p in p_data])
+            interface.SetData(fields['ds_out'] + '_y', [p[2] for p in p_data])
 
             # prepare for the next data picker log
             qt.QApplication.clipboard().setText(text + '\n>>>\n')
