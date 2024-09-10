@@ -79,5 +79,8 @@ class PeakDatasetPickerLog(ToolsPlugin):
             # intentionally adds a non-matching line to ignore the previous data block
             qt.QApplication.clipboard().setText(text + '\n>>>\n')
 
+        else:
+            raise DatasetPluginException('No peak data found in the clipboard.')
+
 
 toolspluginregistry.append(PeakDatasetPickerLog)
