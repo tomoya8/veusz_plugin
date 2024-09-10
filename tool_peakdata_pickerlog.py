@@ -4,6 +4,7 @@
 from veusz.plugins import *
 import veusz.qtall as qt
 import re
+import sys
 
 
 class PeakDatasetPickerLog(ToolsPlugin):
@@ -12,16 +13,21 @@ class PeakDatasetPickerLog(ToolsPlugin):
     menu = ("Peak Data from Picker Log",)
     name = "PeakDataPicker"
     description_short = 'Create peak dataset from data picker log.'
-    description_full = 'Create peak dataset from data picker log stored in clipboard.'
+    description_full = ('Create peak dataset from data picker log stored in clipboard.\n'
+                        'Check "Preferences... > Picker > Copy picked points to clipboard"\n')
 
     def __init__(self):
         self.fields = [
-            field.FieldDataset('ds_out', 'Output dataset name', 'marker'),
+            # Intentionally not using FieldDataset here. FieldDataset sometimes fails
+            field.FieldText('ds_out', 'Output dataset name', ''),
         ]
 
     def apply(self, interface, fields):
-        text = qt.QApplication.clipboard().text().rstrip('\n')
+        ds_out_name = fields['ds_out']
+        if ds_out_name == '':
+            raise DatasetPluginException('Output dataset name is empty.')
 
+        text = qt.QApplication.clipboard().text().rstrip('\n')
         if text == '':
             raise DatasetPluginException('No data found in clipboard.')
 
@@ -53,7 +59,7 @@ class PeakDatasetPickerLog(ToolsPlugin):
 
                     # check if the index is in the list
                     ds_y = interface.GetData(y_name)[0]
-                    if y_value > ds_y[(index-1)-2] and y_value > ds_y[(index-1)+2]:
+                    if index > 3 and y_value > ds_y[(index-1)-2] and y_value > ds_y[(index-1)+2]:
                         old_index = index
                         old_x_value = x_value
                         old_y_value = y_value
@@ -66,11 +72,15 @@ class PeakDatasetPickerLog(ToolsPlugin):
                 # mark to clear the data
                 old_index = 0
 
-        x_data.append(old_x_value)
-        y_data.append(old_y_value)
+        if old_index != 0:
+            x_data.append(old_x_value)
+            y_data.append(old_y_value)
 
-        interface.SetData(fields['ds_out'] + '_x', x_data)
-        interface.SetData(fields['ds_out'] + '_y', y_data)
+            interface.SetData(fields['ds_out'] + '_x', x_data)
+            interface.SetData(fields['ds_out'] + '_y', y_data)
+
+            # prepare for the next data picker log
+            qt.QApplication.clipboard().setText(text + '\n>>>\n')
 
 
 toolspluginregistry.append(PeakDatasetPickerLog)
