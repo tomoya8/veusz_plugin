@@ -14,7 +14,8 @@ class PeakDatasetPickerLog(ToolsPlugin):
     name = "PeakDataPicker"
     description_short = 'Create peak dataset from data picker log.'
     description_full = ('Create peak dataset from data picker log stored in clipboard.\n'
-                        'Check "Preferences... > Picker > Copy picked points to clipboard"\n')
+                        'Check "Preferences... > Picker > Copy picked points to clipboard"\n'
+                        'Peak data will be stored in two datasets: [name]_x and [name]_y.\n')
 
     def __init__(self):
         self.fields = [
@@ -29,7 +30,7 @@ class PeakDatasetPickerLog(ToolsPlugin):
 
         text = qt.QApplication.clipboard().text().rstrip('\n')
         if text == '':
-            raise DatasetPluginException('No data found in clipboard.')
+            raise DatasetPluginException('Clipboard is empty.')
 
         pattern = re.compile(r'^.*?\[(\d+)\]\s=\s(\d+(\.\d+)?),\s(.*?)\[(\d+)\]\s=\s(\d+(\.\d+)?)')
 
@@ -45,16 +46,11 @@ class PeakDatasetPickerLog(ToolsPlugin):
                     y_value = float(match.group(6))
                     y_name = match.group(4)
 
-                    old_index = o_value[0]
-                    if abs(index - old_index) > 10:
-                        if old_index == 0:
-                            p_data.clear()
-                        # check if the index is in the list
-                        elif all(t[0] != old_index for t in p_data):
-                            p_data.append(o_value)
+                    if o_value != (0, 0, 0) and abs(index - o_value[0]) > 10:
+                        p_data.append(o_value)
 
-                    # check if the y value is a peak
                     try:
+                        # check if the y value is a peak
                         ds_y = interface.GetData(y_name)[0]
                         if index > 3 and y_value > ds_y[(index-1)-2] and y_value > ds_y[(index-1)+2]:
                             o_value = (index, x_value, y_value)
@@ -66,17 +62,21 @@ class PeakDatasetPickerLog(ToolsPlugin):
                     pass
 
             else:
-                # if we find a line that does not match the pattern, ignore previous data
-                # mark to clear the data
+                # if we find a line that does not match the pattern, ignore the previous data block
                 o_value = (0, 0, 0)
+                p_data.clear()
 
-        if o_value[0] != 0:
+        if o_value != (0, 0, 0):
             p_data.append(o_value)
+
+            # remove duplicates and sort by index
+            p_data = list(dict.fromkeys(sorted(p_data, key=lambda t: t[0])))
 
             interface.SetData(fields['ds_out'] + '_x', [p[1] for p in p_data])
             interface.SetData(fields['ds_out'] + '_y', [p[2] for p in p_data])
 
-            # prepare for the next data picker log
+            # prepare for the next apply
+            # intentionally adds a non-matching line to ignore the previous data block
             qt.QApplication.clipboard().setText(text + '\n>>>\n')
 
 
