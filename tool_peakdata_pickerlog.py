@@ -72,8 +72,8 @@ class PeakDatasetPickerLog(ToolsPlugin):
             # remove duplicates and sort by index
             p_data = list(dict.fromkeys(sorted(p_data, key=lambda t: t[0])))
 
-            interface.SetData(fields['ds_out'] + '_x', [p[1] for p in p_data])
-            interface.SetData(fields['ds_out'] + '_y', [p[2] for p in p_data])
+            interface.SetData(ds_out_name + '_x', [p[1] for p in p_data])
+            interface.SetData(ds_out_name + '_y', [p[2] for p in p_data])
 
             # prepare for the next apply
             # intentionally adds a non-matching line to ignore the previous data block
