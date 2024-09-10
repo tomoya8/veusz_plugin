@@ -33,6 +33,10 @@ class PeakDatasetPickerLog(ToolsPlugin):
         if text == '':
             raise DatasetPluginException('Clipboard is empty.')
 
+        ds_names = sorted(interface.GetDatasets(), key=len, reverse=True)
+
+        # line example:
+        # xy1: angle[2702] = 55.182, int2[2702] = -1393
         pattern = re.compile(r'^.*?\[([-\d]+)\]\s=\s([-\d]+(\.\d+)?),\s(.*?)\[([-\d]+)\]\s=\s([-\d]+(\.\d+)?)')
 
         o_value = (0, 0, 0)
@@ -51,9 +55,12 @@ class PeakDatasetPickerLog(ToolsPlugin):
                         p_data.append(o_value)
 
                     try:
+                        # search ds name in y_name expression  (e.g. y_val+100 -> y_val)
+                        y_name = [name for name in ds_names if name in y_name][0]
+
                         # check if the y value is a peak or a ditch
                         ds_y = interface.GetData(y_name)[0]
-                        if index > 3 and (y_value - ds_y[(index-1)-2]) * (y_value - ds_y[(index-1)+2]) > 0:
+                        if index > 3 and (ds_y[index] - ds_y[(index-1)-2]) * (ds_y[index] - ds_y[(index-1)+2]) > 0:
                             o_value = (index, x_value, y_value)
 
                     except KeyError:
@@ -76,12 +83,12 @@ class PeakDatasetPickerLog(ToolsPlugin):
             interface.SetData(ds_out_name + '_x', [p[1] for p in p_data])
             interface.SetData(ds_out_name + '_y', [p[2] for p in p_data])
 
-            # prepare for the next apply
-            # intentionally adds a non-matching line to ignore the previous data block
-            qt.QApplication.clipboard().setText(text + '\n>>>\n')
-
         else:
             raise DatasetPluginException('No peak data found in the clipboard.')
+
+        # prepare for the next apply
+        # intentionally adds a non-matching line to ignore the previous data block
+        qt.QApplication.clipboard().setText(text + '\n>>> Plugin: processed peak data from picker log\n')
 
 
 toolspluginregistry.append(PeakDatasetPickerLog)
