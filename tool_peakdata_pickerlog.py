@@ -33,7 +33,7 @@ class PeakDatasetPickerLog(ToolsPlugin):
         if text == '':
             raise DatasetPluginException('Clipboard is empty.')
 
-        pattern = re.compile(r'^.*?\[(\d+)\]\s=\s(\d+(\.\d+)?),\s(.*?)\[(\d+)\]\s=\s(\d+(\.\d+)?)')
+        pattern = re.compile(r'^.*?\[([-\d]+)\]\s=\s([-\d]+(\.\d+)?),\s(.*?)\[([-\d]+)\]\s=\s([-\d]+(\.\d+)?)')
 
         o_value = (0, 0, 0)
         p_data = []
@@ -51,9 +51,9 @@ class PeakDatasetPickerLog(ToolsPlugin):
                         p_data.append(o_value)
 
                     try:
-                        # check if the y value is a peak
+                        # check if the y value is a peak or a ditch
                         ds_y = interface.GetData(y_name)[0]
-                        if index > 3 and y_value > ds_y[(index-1)-2] and y_value > ds_y[(index-1)+2]:
+                        if index > 3 and (y_value - ds_y[(index-1)-2]) * (y_value - ds_y[(index-1)+2]) > 0:
                             o_value = (index, x_value, y_value)
 
                     except KeyError:
