@@ -15,6 +15,7 @@ class PeakDatasetPickerLog(ToolsPlugin):
     description_short = 'Create peak dataset from data picker log.'
     description_full = ('Create peak dataset from data picker log stored in clipboard.\n'
                         'Check "Preferences... > Picker > Copy picked points to clipboard"\n'
+                        'Select peaks using data picker and push "Apply" button.\n'
                         'Peak data will be stored in two datasets: [name]_x and [name]_y.\n')
 
     def __init__(self):
