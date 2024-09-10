@@ -56,7 +56,7 @@ class PeakDatasetPickerLog(ToolsPlugin):
 
                     try:
                         # search ds name in y_name expression  (e.g. y_val+100 -> y_val)
-                        y_name = [name for name in ds_names if name in y_name][0]
+                        y_name = [name for name in ds_names if str(name) in y_name][0]
 
                         # check if the y value is a peak or a ditch
                         ds_y = interface.GetData(y_name)[0]
