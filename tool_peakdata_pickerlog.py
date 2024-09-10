@@ -54,6 +54,7 @@ class PeakDatasetPickerLog(ToolsPlugin):
                     if o_value != (0, 0, 0) and abs(index - o_value[0]) > 10:
                         p_data.append(o_value)
 
+                    print('y_name:', y_name, file=sys.stderr)
                     try:
                         # search ds name in y_name expression  (e.g. y_val+100 -> y_val)
                         y_name = [name for name in ds_names if name in y_name][0]
