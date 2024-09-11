@@ -10,7 +10,7 @@ import sys
 class PeakDatasetPickerLog(ToolsPlugin):
     """Create dataset from a data picker console log."""
 
-    menu = ("Peak Data from Picker Log",)
+    menu = ("Peak dataset from Picker log",)
     name = "PeakDataPicker"
     description_short = 'Create peak dataset from data picker log.'
     description_full = ('Create peak dataset from data picker log stored in clipboard.\n'
